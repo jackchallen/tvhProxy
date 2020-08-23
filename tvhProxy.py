@@ -16,7 +16,11 @@ config = {
     'tunerCount': os.environ.get('TVH_TUNER_COUNT') or 6,  # number of tuners in tvh
     'tvhWeight': os.environ.get('TVH_WEIGHT') or 300,  # subscription priority
     'chunkSize': os.environ.get('TVH_CHUNK_SIZE') or 1024*1024,  # usually you don't need to edit this
-    'streamProfile': os.environ.get('TVH_PROFILE') or 'pass'  # specifiy a stream profile that you want to use for adhoc transcoding in tvh, e.g. mp4
+    'streamProfile': os.environ.get('TVH_PROFILE') or 'pass',  # specify a stream profile that you want to use for adhoc transcoding in tvh, e.g. mp4
+    'channelMapping': [
+        # Supply a sorted comma-separated list if you wish to filter and sort the channels
+    ]
+ 
 }
 
 discoverData = {
@@ -59,6 +63,22 @@ def lineup():
                            'GuideName': c['name'],
                            'URL': url
                            })
+
+    # If the user wants only specific channels mapping, sort by the order given.
+    if config['channelMapping']:
+        sorted_lineup = []
+        current_channel_number = 1
+        for wanted_channel in config['channelMapping']:
+            for unsorted_channel in lineup:
+                if unsorted_channel['GuideNumber'] == str(wanted_channel):
+                    #Replace the GuideNumber with a hard-coded value so Plex sorts it correctly
+                    sorted_channel = {}
+                    sorted_channel['GuideNumber'] = str(current_channel_number)
+                    sorted_channel['GuideName']   = unsorted_channel['GuideName']
+                    sorted_channel['URL']         = unsorted_channel['URL']
+                    current_channel_number += 1
+                    sorted_lineup.append(sorted_channel)
+        lineup = sorted_lineup
 
     return jsonify(lineup)
 
